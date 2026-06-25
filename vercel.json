@@ -15,15 +15,19 @@
   ],
   "routes": [
     {
-      "src": "/api/brands(.*)",
+      "src": "/api/(.*)",
       "dest": "api/index.js"
     },
     {
-      "src": "/api/models(.*)",
+      "src": "/brands(.*)",
       "dest": "api/index.js"
     },
     {
-      "src": "/api/items(.*)",
+      "src": "/models(.*)",
+      "dest": "api/index.js"
+    },
+    {
+      "src": "/items(.*)",
       "dest": "api/index.js"
     },
     {
