@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API = 'http://localhost:5000';
+const API = '';
 const emptyForm   = { name: '', amount: '', brandId: '', modelId: '' };
 const emptySearch = { name: '', brandId: '', modelId: '', dateFrom: '', dateTo: '' };
 
