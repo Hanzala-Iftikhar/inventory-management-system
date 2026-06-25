@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API = '';
+const API = '/api';
 
 function SortIcon({ col, sort }) {
   if (sort.sortBy !== col) return <span className="sort-icon">↕</span>;

@@ -13,10 +13,26 @@
       }
     }
   ],
-  "rewrites": [
-    { "source": "/brands/:path*", "destination": "/api/index" },
-    { "source": "/models/:path*", "destination": "/api/index" },
-    { "source": "/items/:path*", "destination": "/api/index" },
-    { "source": "/:path*", "destination": "/index.html" }
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/index.js"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "frontend/assets/$1"
+    },
+    {
+      "src": "/(.*)\\.js",
+      "dest": "frontend/$1.js"
+    },
+    {
+      "src": "/(.*)\\.css",
+      "dest": "frontend/$1.css"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/index.html"
+    }
   ]
 }
