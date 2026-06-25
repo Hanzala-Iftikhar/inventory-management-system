@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Items from './pages/Items';
-import Brands from './pages/Brands';
-import Models from './pages/Models';
+import Navbar from './components/navbar';
+import Items from './pages/items';
+import Brands from './pages/brands';
+import Models from './pages/models';
 import './App.css';
 
 function App() {
