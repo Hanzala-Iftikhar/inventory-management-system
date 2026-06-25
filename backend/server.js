@@ -16,10 +16,9 @@ const brandRoutes = require('./routes/brandRoutes');
 const modelRoutes = require('./routes/modelRoutes');
 const itemRoutes  = require('./routes/itemRoutes');
 
-// Routes without /api prefix
-app.use('/brands', brandRoutes);
-app.use('/models', modelRoutes);
-app.use('/items',  itemRoutes);
+app.use('/api/brands', brandRoutes);
+app.use('/api/models', modelRoutes);
+app.use('/api/items',  itemRoutes);
 
 app.get('/', (req, res) => {
   res.json({ status: 'Server is running' });
