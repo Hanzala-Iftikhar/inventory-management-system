@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API = 'https://inventory-management-system-nine-ochre.vercel.app/api';
+const API = 'https://inventory-management-system-lt44.vercel.app';
 
 function SortIcon({ col, sort }) {
   if (sort.sortBy !== col) return <span className="sort-icon">↕</span>;
