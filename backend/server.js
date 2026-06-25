@@ -4,7 +4,6 @@ require('dotenv').config();
 
 const app = express();
 
-// Allow all origins
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -17,9 +16,10 @@ const brandRoutes = require('./routes/brandRoutes');
 const modelRoutes = require('./routes/modelRoutes');
 const itemRoutes  = require('./routes/itemRoutes');
 
-app.use('/api/brands', brandRoutes);
-app.use('/api/models', modelRoutes);
-app.use('/api/items',  itemRoutes);
+// Routes without /api prefix
+app.use('/brands', brandRoutes);
+app.use('/models', modelRoutes);
+app.use('/items',  itemRoutes);
 
 app.get('/', (req, res) => {
   res.json({ status: 'Server is running' });
