@@ -3,41 +3,36 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-
 model Brand {
-  id      Int      @id @default(autoincrement())
-  name    String   @unique
-
-  models  Model[]
-  items   Item[]
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  models Model[]
+  items  Item[]
 }
-
 
 model Model {
-  id       Int      @id @default(autoincrement())
-  name     String
-
-  brandId  Int
-  brand    Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
-
-  items    Item[]
+  id      Int    @id @default(autoincrement())
+  name    String
+  brandId Int
+  brand   Brand  @relation(fields: [brandId], references: [id])
+  items   Item[]
 }
-
 
 model Item {
   id        Int      @id @default(autoincrement())
   name      String
-  amount    Int
-
+  amount    Float
   brandId   Int
-  brand     Brand    @relation(fields: [brandId], references: [id])
-
   modelId   Int?
+  createdAt DateTime @default(now())
+  brand     Brand    @relation(fields: [brandId], references: [id])
   model     Model?   @relation(fields: [modelId], references: [id])
 
-  createdAt DateTime @default(now())
+  @@index([brandId])
+  @@index([modelId])
+  @@index([createdAt])
 }
