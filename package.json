@@ -2,7 +2,8 @@
   "name": "inventory-management-system",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build && cd ../backend && npm install && npx prisma generate"
+    "postinstall": "prisma generate --schema=backend/prisma/schema.prisma",
+    "build": "cd frontend && npm install && npm run build"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",
