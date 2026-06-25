@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API = '';
+const API = 'https://inventory-management-system-nine-ochre.vercel.app';
 const emptyForm   = { name: '', amount: '', brandId: '', modelId: '' };
 const emptySearch = { name: '', brandId: '', modelId: '', dateFrom: '', dateTo: '' };
 
