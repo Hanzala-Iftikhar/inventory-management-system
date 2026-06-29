@@ -5,12 +5,12 @@ const API = '/api';
 const PLACEHOLDER = 'https://placehold.co/400x300/f1f5f9/94a3b8?text=No+Image';
 
 function Catalog() {
-  const [items, setItems]     = useState([]);
-  const [brands, setBrands]   = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch]   = useState('');
+  const [items, setItems]             = useState([]);
+  const [brands, setBrands]           = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [search, setSearch]           = useState('');
   const [brandFilter, setBrandFilter] = useState('');
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected]       = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -45,6 +45,28 @@ function Catalog() {
 
   return (
     <div className="catalog-page">
+
+      {/* Hero Banner */}
+      <div className="catalog-hero">
+        <div className="catalog-hero-text">
+          <h1>🛍️ Product Catalog</h1>
+          <p>Browse our complete collection of products</p>
+        </div>
+        <div className="catalog-hero-stats">
+          <div className="hero-stat">
+            <span className="hero-stat-number">{items.length}</span>
+            <span className="hero-stat-label">Products</span>
+          </div>
+          <div className="hero-stat">
+            <span className="hero-stat-number">{brands.length}</span>
+            <span className="hero-stat-label">Brands</span>
+          </div>
+          <div className="hero-stat">
+            <span className="hero-stat-number">{filtered.length}</span>
+            <span className="hero-stat-label">Showing</span>
+          </div>
+        </div>
+      </div>
 
       {/* Search Bar */}
       <div className="catalog-topbar">
@@ -82,7 +104,7 @@ function Catalog() {
       {groupedByBrand.map(({ brand, items: brandItems }) => (
         <div key={brand.id} className="brand-section">
           <div className="brand-header">
-            <h2>{brand.name} Products</h2>
+            <h2>🏷️ {brand.name} Products</h2>
             <span className="brand-count">{brandItems.length} items</span>
           </div>
           <div className="catalog-grid">
@@ -96,6 +118,7 @@ function Catalog() {
                     className="product-image"
                     onError={e => { e.target.src = PLACEHOLDER; }}
                   />
+                  <div className="product-overlay"></div>
                   {item.category && (
                     <span className="product-badge">{item.category}</span>
                   )}
@@ -114,7 +137,10 @@ function Catalog() {
                   {item.description && (
                     <p className="product-desc">{item.description}</p>
                   )}
-                  <span className="product-link">View details →</span>
+                  <div className="product-footer">
+                    <span className="product-link">View details</span>
+                    <span className="product-arrow">→</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -134,29 +160,26 @@ function Catalog() {
               onError={e => { e.target.src = PLACEHOLDER; }}
             />
             <div className="modal-body">
+              {selected.category && (
+                <span className="modal-category">{selected.category}</span>
+              )}
               <h2 className="modal-title">{selected.name}</h2>
               <p className="modal-price">
                 Rs. {Number(selected.amount).toLocaleString()}
               </p>
               <div className="modal-details">
                 <div className="modal-row">
-                  <span>Brand</span>
+                  <span>🏷️ Brand</span>
                   <strong>{selected.brand?.name}</strong>
                 </div>
                 {selected.model && (
                   <div className="modal-row">
-                    <span>Model</span>
+                    <span>📦 Model</span>
                     <strong>{selected.model?.name}</strong>
                   </div>
                 )}
-                {selected.category && (
-                  <div className="modal-row">
-                    <span>Category</span>
-                    <strong>{selected.category}</strong>
-                  </div>
-                )}
                 <div className="modal-row">
-                  <span>Date Added</span>
+                  <span>📅 Date Added</span>
                   <strong>{new Date(selected.createdAt).toLocaleDateString()}</strong>
                 </div>
               </div>
