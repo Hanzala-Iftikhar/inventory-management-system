@@ -1,12 +1,61 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const API = '/api';
-const emptyForm   = { name: '', amount: '', brandId: '', modelId: '' };
+const CLOUD_NAME    = 'dhzvnruoo';
+const UPLOAD_PRESET = 'inventory_upload';
+
+const emptyForm   = { name: '', amount: '', brandId: '', modelId: '', description: '', imageUrl: '', category: '' };
 const emptySearch = { name: '', brandId: '', modelId: '', dateFrom: '', dateTo: '' };
 
 function SortIcon({ col, sort }) {
   if (sort.sortBy !== col) return <span className="sort-icon">↕</span>;
   return <span className="sort-icon active">{sort.sortOrder === 'asc' ? '↑' : '↓'}</span>;
+}
+
+function ImageUpload({ value, onChange }) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', UPLOAD_PRESET);
+      const res  = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        { method: 'POST', body: formData }
+      );
+      const data = await res.json();
+      onChange(data.secure_url);
+    } catch (err) {
+      console.error('Upload failed:', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFile}
+        style={{ fontSize: '13px', marginBottom: '8px' }}
+      />
+      {uploading && (
+        <p style={{ color: '#3b82f6', fontSize: '12px' }}>⏳ Uploading...</p>
+      )}
+      {value && (
+        <img
+          src={value}
+          alt="preview"
+          style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px' }}
+        />
+      )}
+    </div>
+  );
 }
 
 function Items() {
@@ -69,7 +118,15 @@ function Items() {
   };
 
   const openEdit = (item) => {
-    setForm({ name: item.name, amount: item.amount, brandId: item.brandId, modelId: item.modelId || '' });
+    setForm({
+      name:        item.name,
+      amount:      item.amount,
+      brandId:     item.brandId,
+      modelId:     item.modelId    || '',
+      description: item.description || '',
+      imageUrl:    item.imageUrl    || '',
+      category:    item.category    || '',
+    });
     setFormError('');
     if (item.brandId) {
       fetch(`${API}/models/by-brand/${item.brandId}`).then(r => r.json()).then(setFormModels);
@@ -90,9 +147,9 @@ function Items() {
 
   const handleFormSubmit = async () => {
     setFormError('');
-    if (!form.name.trim())                          return setFormError('Name is required');
-    if (form.amount === '' || isNaN(form.amount))   return setFormError('Valid amount is required');
-    if (!form.brandId)                              return setFormError('Brand is required');
+    if (!form.name.trim())                        return setFormError('Name is required');
+    if (form.amount === '' || isNaN(form.amount)) return setFormError('Valid amount is required');
+    if (!form.brandId)                            return setFormError('Brand is required');
 
     const url    = modal.mode === 'add' ? `${API}/items` : `${API}/items/${modal.item.id}`;
     const method = modal.mode === 'add' ? 'POST' : 'PUT';
@@ -136,35 +193,27 @@ function Items() {
 
       <div className="search-box">
         <input
-          type="text"
-          placeholder="Search by name…"
+          type="text" placeholder="Search by name…"
           value={search.name}
-          onChange={e => setSearch(p => ({ ...p, name: e.target.value }))}
-        />
-        <select
-          value={search.brandId}
+          onChange={e => setSearch(p => ({ ...p, name: e.target.value }))} />
+        <select value={search.brandId}
           onChange={e => setSearch(p => ({ ...p, brandId: e.target.value, modelId: '' }))}>
           <option value="">All Brands</option>
           {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
-        <select
-          value={search.modelId}
+        <select value={search.modelId}
           onChange={e => setSearch(p => ({ ...p, modelId: e.target.value }))}>
           <option value="">All Models</option>
           {searchModels.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
-        <input
-          type="date"
-          value={search.dateFrom}
+        <input type="date" value={search.dateFrom}
           onChange={e => setSearch(p => ({ ...p, dateFrom: e.target.value }))} />
         <span>to</span>
-        <input
-          type="date"
-          value={search.dateTo}
+        <input type="date" value={search.dateTo}
           onChange={e => setSearch(p => ({ ...p, dateTo: e.target.value }))} />
         <div className="search-buttons">
           <button className="btn btn-primary" onClick={applySearch}>Search</button>
-          <button className="btn btn-ghost" onClick={clearSearch}>Clear</button>
+          <button className="btn btn-ghost"   onClick={clearSearch}>Clear</button>
         </div>
       </div>
 
@@ -177,15 +226,16 @@ function Items() {
               <th onClick={() => handleSort('amount')}>Amount <SortIcon col="amount" sort={sort} /></th>
               <th>Brand</th>
               <th>Model</th>
+              <th>Image</th>
               <th onClick={() => handleSort('createdAt')}>Date Added <SortIcon col="createdAt" sort={sort} /></th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="text-center">Loading…</td></tr>
+              <tr><td colSpan={8} className="text-center">Loading…</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={7} className="text-center">No items found</td></tr>
+              <tr><td colSpan={8} className="text-center">No items found</td></tr>
             ) : items.map(item => (
               <tr key={item.id}>
                 <td>{item.id}</td>
@@ -193,9 +243,16 @@ function Items() {
                 <td>Rs. {Number(item.amount).toLocaleString()}</td>
                 <td>{item.brand?.name || '—'}</td>
                 <td>{item.model?.name || '—'}</td>
+                <td>
+                  {item.imageUrl
+                    ? <img src={item.imageUrl} alt={item.name}
+                        style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6 }} />
+                    : <span style={{ color: '#94a3b8', fontSize: 12 }}>No image</span>
+                  }
+                </td>
                 <td>{new Date(item.createdAt).toLocaleDateString()}</td>
                 <td>
-                  <button className="btn btn-sm btn-edit" onClick={() => openEdit(item)}>Edit</button>
+                  <button className="btn btn-sm btn-edit"   onClick={() => openEdit(item)}>Edit</button>
                   <button className="btn btn-sm btn-delete" onClick={() => setDelDialog({ open: true, id: item.id })}>Delete</button>
                 </td>
               </tr>
@@ -217,30 +274,25 @@ function Items() {
         </div>
       </div>
 
-      {modal.open && (
+      {/* ── ADD Modal ── */}
+      {modal.open && modal.mode === 'add' && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}
+            style={{ maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="modal-header">
-              <h2>{modal.mode === 'add' ? 'Add New Item' : 'Edit Item'}</h2>
+              <h2>➕ Add New Item</h2>
               <button className="modal-close" onClick={closeModal}>✕</button>
             </div>
             <div className="modal-body">
               {formError && <p className="error-msg">{formError}</p>}
               <div className="form-group">
                 <label>Name *</label>
-                <input
-                  type="text"
-                  placeholder="Item name"
-                  value={form.name}
+                <input type="text" placeholder="Item name" value={form.name}
                   onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
               </div>
               <div className="form-group">
                 <label>Amount *</label>
-                <input
-                  type="number"
-                  placeholder="0"
-                  min="0"
-                  value={form.amount}
+                <input type="number" placeholder="0" min="0" value={form.amount}
                   onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} />
               </div>
               <div className="form-group">
@@ -252,27 +304,114 @@ function Items() {
               </div>
               <div className="form-group">
                 <label>Model (optional)</label>
-                <select
-                  value={form.modelId}
-                  disabled={!form.brandId}
+                <select value={form.modelId} disabled={!form.brandId}
                   onChange={e => setForm(p => ({ ...p, modelId: e.target.value }))}>
                   <option value="">No Model</option>
                   {formModels.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
               </div>
+              <div className="form-group">
+                <label>Category</label>
+                <input type="text" placeholder="e.g. Clothing, Electronics" value={form.category}
+                  onChange={e => setForm(p => ({ ...p, category: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  placeholder="Product description..."
+                  value={form.description}
+                  onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #cbd5e1', borderRadius: '7px', fontSize: '13px', minHeight: '80px', resize: 'vertical', outline: 'none' }}
+                />
+              </div>
+              <div className="form-group">
+                <label>Image</label>
+                <ImageUpload
+                  value={form.imageUrl}
+                  onChange={url => setForm(p => ({ ...p, imageUrl: url }))}
+                />
+              </div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={closeModal}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleFormSubmit}>Save</button>
+              <button className="btn btn-primary" onClick={handleFormSubmit}>✅ Add Item</button>
             </div>
           </div>
         </div>
       )}
 
+      {/* ── EDIT Modal ── */}
+      {modal.open && modal.mode === 'edit' && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal" onClick={e => e.stopPropagation()}
+            style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="modal-header" style={{ background: '#f0f9ff', borderRadius: '12px 12px 0 0' }}>
+              <h2>✏️ Edit Item</h2>
+              <button className="modal-close" onClick={closeModal}>✕</button>
+            </div>
+            <div className="modal-body">
+              {formError && <p className="error-msg">{formError}</p>}
+              <div className="form-group">
+                <label>Name *</label>
+                <input type="text" placeholder="Item name" value={form.name}
+                  onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label>Amount *</label>
+                <input type="number" placeholder="0" min="0" value={form.amount}
+                  onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label>Brand *</label>
+                <select value={form.brandId} onChange={e => handleFormBrand(e.target.value)}>
+                  <option value="">Select Brand</option>
+                  {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Model (optional)</label>
+                <select value={form.modelId} disabled={!form.brandId}
+                  onChange={e => setForm(p => ({ ...p, modelId: e.target.value }))}>
+                  <option value="">No Model</option>
+                  {formModels.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Category</label>
+                <input type="text" placeholder="e.g. Clothing, Electronics" value={form.category}
+                  onChange={e => setForm(p => ({ ...p, category: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  placeholder="Product description..."
+                  value={form.description}
+                  onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #cbd5e1', borderRadius: '7px', fontSize: '13px', minHeight: '80px', resize: 'vertical', outline: 'none' }}
+                />
+              </div>
+              <div className="form-group">
+                <label>Image</label>
+                <ImageUpload
+                  value={form.imageUrl}
+                  onChange={url => setForm(p => ({ ...p, imageUrl: url }))}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={closeModal}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleFormSubmit}
+                style={{ background: '#0369a1' }}>💾 Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DELETE Dialog ── */}
       {delDialog.open && (
         <div className="modal-overlay">
           <div className="modal modal-sm">
-            <div className="modal-header"><h2>Confirm Delete</h2></div>
+            <div className="modal-header"><h2>🗑️ Confirm Delete</h2></div>
             <div className="modal-body">
               <p style={{ color: '#475569' }}>Are you sure you want to delete this item?</p>
             </div>

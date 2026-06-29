@@ -23,14 +23,17 @@ model Model {
 }
 
 model Item {
-  id        Int      @id @default(autoincrement())
-  name      String
-  amount    Float
-  brandId   Int
-  modelId   Int?
-  createdAt DateTime @default(now())
-  brand     Brand    @relation(fields: [brandId], references: [id])
-  model     Model?   @relation(fields: [modelId], references: [id])
+  id          Int      @id @default(autoincrement())
+  name        String
+  amount      Float
+  description String?
+  imageUrl    String?
+  category    String?
+  brandId     Int
+  modelId     Int?
+  createdAt   DateTime @default(now())
+  brand       Brand    @relation(fields: [brandId], references: [id])
+  model       Model?   @relation(fields: [modelId], references: [id])
 
   @@index([brandId])
   @@index([modelId])
