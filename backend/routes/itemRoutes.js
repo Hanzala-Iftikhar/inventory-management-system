@@ -28,3 +28,142 @@ router.get('/', async (req, res) => {
     const [items, total] = await Promise.all([
       prisma.item.findMany({
         skip, take: parseInt(limit), where, orderBy,
+        include: {
+          brand: { select: { name: true } },
+          model: { select: { name: true } },
+        },
+      }),
+      prisma.item.count({ where }),
+    ]);
+
+    res.json({
+      data: items,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / parseInt(limit)),
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /items/catalog — all items for catalog page
+router.get('/catalog', async (req, res) => {
+  try {
+    const items = await prisma.item.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        brand: { select: { name: true } },
+        model: { select: { name: true } },
+      },
+    });
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /items/export — CSV export
+router.get('/export', async (req, res) => {
+  try {
+    const where = buildWhere(req.query);
+    const items = await prisma.item.findMany({
+      where,
+      include: {
+        brand: { select: { name: true } },
+        model: { select: { name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const escape  = (val) => `"${String(val || '').replace(/"/g, '""')}"`;
+    const headers = ['ID', 'Name', 'Amount', 'Brand', 'Model', 'Category', 'Date Added'];
+    const rows    = items.map((i) => [
+      i.id, escape(i.name), i.amount,
+      escape(i.brand?.name), escape(i.model?.name || ''),
+      escape(i.category || ''),
+      new Date(i.createdAt).toISOString().split('T')[0],
+    ]);
+
+    const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="items.csv"');
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST — create item
+router.post('/', async (req, res) => {
+  try {
+    const { name, amount, brandId, modelId, description, imageUrl, category } = req.body;
+    if (!name?.trim())                         return res.status(400).json({ error: 'Name is required' });
+    if (amount === undefined || isNaN(amount)) return res.status(400).json({ error: 'Valid amount is required' });
+    if (!brandId)                              return res.status(400).json({ error: 'Brand is required' });
+
+    const item = await prisma.item.create({
+      data: {
+        name:        name.trim(),
+        amount:      parseFloat(amount),
+        brandId:     parseInt(brandId),
+        modelId:     modelId     ? parseInt(modelId)  : null,
+        description: description ? description.trim() : null,
+        imageUrl:    imageUrl    ? imageUrl.trim()    : null,
+        category:    category    ? category.trim()    : null,
+      },
+      include: {
+        brand: { select: { name: true } },
+        model: { select: { name: true } },
+      },
+    });
+    res.status(201).json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT — update item
+router.put('/:id', async (req, res) => {
+  try {
+    const { name, amount, brandId, modelId, description, imageUrl, category } = req.body;
+    if (!name?.trim())                         return res.status(400).json({ error: 'Name is required' });
+    if (amount === undefined || isNaN(amount)) return res.status(400).json({ error: 'Valid amount is required' });
+    if (!brandId)                              return res.status(400).json({ error: 'Brand is required' });
+
+    const item = await prisma.item.update({
+      where: { id: parseInt(req.params.id) },
+      data: {
+        name:        name.trim(),
+        amount:      parseFloat(amount),
+        brandId:     parseInt(brandId),
+        modelId:     modelId     ? parseInt(modelId)  : null,
+        description: description ? description.trim() : null,
+        imageUrl:    imageUrl    ? imageUrl.trim()    : null,
+        category:    category    ? category.trim()    : null,
+      },
+      include: {
+        brand: { select: { name: true } },
+        model: { select: { name: true } },
+      },
+    });
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE — delete item
+router.delete('/:id', async (req, res) => {
+  try {
+    await prisma.item.delete({ where: { id: parseInt(req.params.id) } });
+    res.json({ message: 'Item deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
