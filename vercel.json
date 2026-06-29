@@ -14,13 +14,21 @@
     }
   ],
   "routes": [
-    { "src": "/api/(.*)",      "dest": "api/index.js" },
-    { "src": "/brands(.*)",    "dest": "api/index.js" },
-    { "src": "/models(.*)",    "dest": "api/index.js" },
-    { "src": "/items(.*)",     "dest": "api/index.js" },
-    { "src": "/assets/(.*)",   "dest": "frontend/assets/$1" },
-    { "src": "/(.*)\\.js",    "dest": "frontend/$1.js" },
-    { "src": "/(.*)\\.css",   "dest": "frontend/$1.css" },
-    { "src": "/(.*)",          "dest": "frontend/index.html" }
+    { "src": "/api/(.*)",           "dest": "api/index.js" },
+    { "src": "/brands/all",         "dest": "api/index.js" },
+    { "src": "/brands/(.*)",        "dest": "api/index.js" },
+    { "src": "/brands",             "dest": "api/index.js" },
+    { "src": "/models/all",         "dest": "api/index.js" },
+    { "src": "/models/by-brand/(.*)", "dest": "api/index.js" },
+    { "src": "/models/(.*)",        "dest": "api/index.js" },
+    { "src": "/models",             "dest": "api/index.js" },
+    { "src": "/items/catalog",      "dest": "api/index.js" },
+    { "src": "/items/export",       "dest": "api/index.js" },
+    { "src": "/items/(.*)",         "dest": "api/index.js" },
+    { "src": "/items",              "dest": "api/index.js" },
+    { "src": "/assets/(.*)",        "dest": "frontend/assets/$1" },
+    { "src": "/(.*)\\.js",         "dest": "frontend/$1.js" },
+    { "src": "/(.*)\\.css",        "dest": "frontend/$1.css" },
+    { "src": "/(.*)",               "dest": "frontend/index.html" }
   ]
 }
