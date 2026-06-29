@@ -1,8 +1,7 @@
 const express = require('express');
-const router = express.Router();
-const prisma = require('../prisma');
+const router  = express.Router();
+const prisma  = require('../prisma');
 
-// Helper function — builds search/filter conditions
 function buildWhere({ name, brandId, modelId, dateFrom, dateTo }) {
   const where = {};
   if (name)    where.name    = { contains: name };
@@ -22,17 +21,13 @@ router.get('/', async (req, res) => {
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
     const skip  = (parseInt(page) - 1) * parseInt(limit);
     const where = buildWhere(req.query);
-
     const allowedSort = { id: true, name: true, amount: true, createdAt: true };
     const safeSort    = allowedSort[sortBy] ? sortBy : 'createdAt';
     const orderBy     = { [safeSort]: sortOrder === 'asc' ? 'asc' : 'desc' };
 
     const [items, total] = await Promise.all([
       prisma.item.findMany({
-        skip,
-        take: parseInt(limit),
-        where,
-        orderBy,
+        skip, take: parseInt(limit), where, orderBy,
         include: {
           brand: { select: { name: true } },
           model: { select: { name: true } },
@@ -55,12 +50,26 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /items/export — download as CSV (respects search filters)
-// IMPORTANT: this must be ABOVE the /:id route
+// GET /items/catalog — all items for catalog page (no pagination)
+router.get('/catalog', async (req, res) => {
+  try {
+    const items = await prisma.item.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        brand: { select: { name: true } },
+        model: { select: { name: true } },
+      },
+    });
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /items/export — CSV export
 router.get('/export', async (req, res) => {
   try {
     const where = buildWhere(req.query);
-
     const items = await prisma.item.findMany({
       where,
       include: {
@@ -71,9 +80,8 @@ router.get('/export', async (req, res) => {
     });
 
     const escape = (val) => `"${String(val || '').replace(/"/g, '""')}"`;
-
     const headers = ['ID', 'Name', 'Amount', 'Brand', 'Model', 'Date Added'];
-    const rows    = items.map((i) => [
+    const rows = items.map((i) => [
       i.id,
       escape(i.name),
       i.amount,
@@ -83,7 +91,6 @@ router.get('/export', async (req, res) => {
     ]);
 
     const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
-
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="items.csv"');
     res.send(csv);
@@ -96,9 +103,9 @@ router.get('/export', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, amount, brandId, modelId } = req.body;
-    if (!name?.trim())                          return res.status(400).json({ error: 'Name is required' });
-    if (amount === undefined || isNaN(amount))  return res.status(400).json({ error: 'Valid amount is required' });
-    if (!brandId)                               return res.status(400).json({ error: 'Brand is required' });
+    if (!name?.trim())                         return res.status(400).json({ error: 'Name is required' });
+    if (amount === undefined || isNaN(amount)) return res.status(400).json({ error: 'Valid amount is required' });
+    if (!brandId)                              return res.status(400).json({ error: 'Brand is required' });
 
     const item = await prisma.item.create({
       data: {
@@ -122,9 +129,9 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { name, amount, brandId, modelId } = req.body;
-    if (!name?.trim())                          return res.status(400).json({ error: 'Name is required' });
-    if (amount === undefined || isNaN(amount))  return res.status(400).json({ error: 'Valid amount is required' });
-    if (!brandId)                               return res.status(400).json({ error: 'Brand is required' });
+    if (!name?.trim())                         return res.status(400).json({ error: 'Name is required' });
+    if (amount === undefined || isNaN(amount)) return res.status(400).json({ error: 'Valid amount is required' });
+    if (!brandId)                              return res.status(400).json({ error: 'Brand is required' });
 
     const item = await prisma.item.update({
       where: { id: parseInt(req.params.id) },
@@ -145,7 +152,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE — delete single item
+// DELETE — delete item
 router.delete('/:id', async (req, res) => {
   try {
     await prisma.item.delete({ where: { id: parseInt(req.params.id) } });
